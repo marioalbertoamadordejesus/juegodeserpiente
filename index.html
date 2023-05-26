@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Juego de la Serpiente de beto amador</title>
+  <style>
+    #game-board {
+      width: 400px;
+      height: 400px;
+      border: 1px solid #ccc;
+      position: relative;
+    }
+
+    .cell {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background-color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>Juego de la Serpiente by Alberto Amador</h1>
+  <div id="game-board"></div>
+
+  <script>
+    const BOARD_SIZE = 20;
+    const CELL_SIZE = 20;
+
+    const gameBoard = document.getElementById('game-board');
+
+    function createCell(x, y) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.style.left = `${x * CELL_SIZE}px`;
+      cell.style.top = `${y * CELL_SIZE}px`;
+      return cell;
+    }
+
+    class Snake {
+      constructor() {
+        this.body = [{ x: 10, y: 10 }];
+        this.direction = 'right';
+      }
+
+      move() {
+        const head = { ...this.body[0] };
+        switch (this.direction) {
+          case 'up':
+            head.y--;
+            break;
+          case 'down':
+            head.y++;
+            break;
+          case 'left':
+            head.x--;
+            break;
+          case 'right':
+            head.x++;
+            break;
+        }
+        this.body.unshift(head);
+        this.body.pop();
+      }
+
+      changeDirection(newDirection) {
+        this.direction = newDirection;
+      }
+
+      canEatFood(food) {
+        const head = this.body[0];
+        return head.x === food.x && head.y === food.y;
+      }
+
+      grow() {
+        const tail = { ...this.body[this.body.length - 1] };
+        this.body.push(tail);
+      }
+
+      isCollision() {
+        const head = this.body[0];
+        for (let i = 1; i < this.body.length; i++) {
+          if (head.x === this.body[i].x && head.y === this.body[i].y) {
+            return true;
+          }
+        }
+        return false;
+      }
+    }
+
+    class Food {
+      constructor() {
+        this.x = Math.floor(Math.random() * BOARD_SIZE);
+        this.y = Math.floor(Math.random() * BOARD_SIZE);
+      }
+
+      respawn() {
+        this.x = Math.floor(Math.random() * BOARD_SIZE);
+        this.y = Math.floor(Math.random() * BOARD_SIZE);
+      }
+    }
+
+    class Game {
+      constructor() {
+        this.snake = new Snake();
+        this.food = new Food();
+        this.isGameOver = false;
+        this.interval = null;
+      }
+
+      start() {
+        this.interval = setInterval(() => {
+          this.update();
+          this.render();
+        }, 200);
+
+        document.addEventListener('keydown', this.handleKeyDown.bind(this));
+      }
+
+      update() {
+        if (this.isGameOver) {
+          clearInterval(this.interval);
+          return;
+        }
+
+        this.snake.move();
+
+        if (this.snake.isCollision()) {
+          this.isGameOver = true;
+          return;
+        }
+
+        if (this.snake.canEatFood(this.food)) {
+          this.snake.grow();
+          this.food.respawn();
+        }
+      }
+
+      render() {
+        gameBoard.innerHTML = '';
+
+        this.snake.body.forEach(segment => {
+          const cell = createCell(segment.x, segment.y);
+          gameBoard.appendChild(cell);
+        });
+
+        const foodCell = createCell(this.food.x, this.food.y);
+        gameBoard.appendChild(foodCell);
+      }
+
+      handleKeyDown(event) {
+        if (event.key === 'ArrowUp' && this.snake.direction !== 'down') {
+          this.snake.changeDirection('up');
+        } else if (event.key === 'ArrowDown' && this.snake.direction !== 'up') {
+          this.snake.changeDirection('down');
+        } else if (event.key === 'ArrowLeft' && this.snake.direction !== 'right') {
+          this.snake.changeDirection('left');
+        } else if (event.key === 'ArrowRight' && this.snake.direction !== 'left') {
+          this.snake.changeDirection('right');
+        }
+      }
+    }
+
+    const game = new Game();
+    game.start();
+  </script>
+</body>
+</html>
